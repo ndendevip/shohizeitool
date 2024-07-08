@@ -1,12 +1,172 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ハローワールド</title>
+    <title>消費税詳細計算機（原則課税・簡易課税）</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .tax-column {
+            width: 48%;
+        }
+        .tax-details, .tax-payment, .cash-flow, .simplified-tax {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .tax-payment {
+            background-color: #e6f3ff;
+        }
+        .cash-flow {
+            background-color: #e6ffe6;
+            font-weight: bold;
+        }
+        .simplified-tax {
+            background-color: #ffe6e6;
+        }
+    </style>
 </head>
 <body>
-    <h1>ハローワールド</h1>
+    <h1>消費税詳細計算機（原則課税・簡易課税）</h1>
+    <form id="taxCalculator">
+        <label for="revenue">売上金額（税込み）:</label>
+        <input type="number" id="revenue" required>
+
+        <label for="cost">仕入金額（税込み）:</label>
+        <input type="number" id="cost" required>
+
+        <button type="submit">計算</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('taxCalculator').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const revenue = parseFloat(document.getElementById('revenue').value);
+            const cost = parseFloat(document.getElementById('cost').value);
+            
+            const totalTaxRate = 0.1;
+            const nationalTaxRate = 0.078;
+            const localTaxRate = 0.022;
+            const simplifiedTaxRate = 0.5; // 簡易課税の控除率（50%）
+
+            const revenueWithoutTax = revenue / (1 + totalTaxRate);
+            const costWithoutTax = cost / (1 + totalTaxRate);
+
+            const revenueTotalTax = revenue - revenueWithoutTax;
+            const revenueNationalTax = revenueWithoutTax * nationalTaxRate;
+            const revenueLocalTax = revenueWithoutTax * localTaxRate;
+
+            const costTotalTax = cost - costWithoutTax;
+            const costNationalTax = costWithoutTax * nationalTaxRate;
+            const costLocalTax = costWithoutTax * localTaxRate;
+
+            const profit = revenueWithoutTax - costWithoutTax;
+
+            // 原則課税の計算
+            const normalNationalTaxPayment = revenueNationalTax - costNationalTax;
+            const normalLocalTaxPayment = revenueLocalTax - costLocalTax;
+            const normalTotalTaxPayment = normalNationalTaxPayment + normalLocalTaxPayment;
+
+            // 簡易課税の計算
+            const simplifiedNationalTaxPayment = revenueNationalTax * simplifiedTaxRate;
+            const simplifiedLocalTaxPayment = revenueLocalTax;
+            const simplifiedTotalTaxPayment = simplifiedNationalTaxPayment + simplifiedLocalTaxPayment;
+
+            // キャッシュフローの計算
+            const normalCashFlow = profit - normalTotalTaxPayment;
+            const simplifiedCashFlow = profit - simplifiedTotalTaxPayment;
+            
+            document.getElementById('result').innerHTML = `
+                <div class="tax-column">
+                    <h2>原則課税</h2>
+                    <p>消費税抜きの利益: ${profit.toFixed(0)}円</p>
+                    <div class="tax-details">
+                        <h4>売上の内訳:</h4>
+                        <p>税抜き金額: ${revenueWithoutTax.toFixed(0)}円</p>
+                        <p>消費税（国税）: ${revenueNationalTax.toFixed(0)}円</p>
+                        <p>消費税（地方税）: ${revenueLocalTax.toFixed(0)}円</p>
+                        <p>消費税合計: ${revenueTotalTax.toFixed(0)}円</p>
+                    </div>
+                    <div class="tax-details">
+                        <h4>仕入の内訳:</h4>
+                        <p>税抜き金額: ${costWithoutTax.toFixed(0)}円</p>
+                        <p>消費税（国税）: ${costNationalTax.toFixed(0)}円</p>
+                        <p>消費税（地方税）: ${costLocalTax.toFixed(0)}円</p>
+                        <p>消費税合計: ${costTotalTax.toFixed(0)}円</p>
+                    </div>
+                    <div class="tax-payment">
+                        <h4>納付すべき消費税（原則課税）:</h4>
+                        <p>国税: ${normalNationalTaxPayment.toFixed(0)}円</p>
+                        <p>地方税: ${normalLocalTaxPayment.toFixed(0)}円</p>
+                        <p>合計: ${normalTotalTaxPayment.toFixed(0)}円</p>
+                    </div>
+                    <div class="cash-flow">
+                        <h4>手元に残るキャッシュフロー（原則課税）:</h4>
+                        <p>${normalCashFlow.toFixed(0)}円</p>
+                    </div>
+                </div>
+                <div class="tax-column">
+                    <h2>簡易課税</h2>
+                    <p>消費税抜きの利益: ${profit.toFixed(0)}円</p>
+                    <div class="tax-details">
+                        <h4>売上の内訳:</h4>
+                        <p>税抜き金額: ${revenueWithoutTax.toFixed(0)}円</p>
+                        <p>消費税（国税）: ${revenueNationalTax.toFixed(0)}円</p>
+                        <p>消費税（地方税）: ${revenueLocalTax.toFixed(0)}円</p>
+                        <p>消費税合計: ${revenueTotalTax.toFixed(0)}円</p>
+                    </div>
+                    <div class="simplified-tax">
+                        <h4>納付すべき消費税（簡易課税）:</h4>
+                        <p>国税: ${simplifiedNationalTaxPayment.toFixed(0)}円</p>
+                        <p>地方税: ${simplifiedLocalTaxPayment.toFixed(0)}円</p>
+                        <p>合計: ${simplifiedTotalTaxPayment.toFixed(0)}円</p>
+                    </div>
+                    <div class="cash-flow">
+                        <h4>手元に残るキャッシュフロー（簡易課税）:</h4>
+                        <p>${simplifiedCashFlow.toFixed(0)}円</p>
+                    </div>
+                </div>
+            `;
+        });
+    </script>
 </body>
 </html>
